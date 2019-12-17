@@ -5,7 +5,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const rootPath = path.resolve(__dirname, '../');
 const distPath = rootPath + '/dist/';
-const publicPath = rootPath + '/static/';
 const sourcePath = rootPath + '/src';
 module.exports = {
   entry: {
@@ -15,7 +14,7 @@ module.exports = {
   output: {
     filename: '[hash].bundle.js',
     path: distPath,
-    publicPath
+    publicPath: '/static'
   },
   devtool: 'inline-source-map',
   module: {

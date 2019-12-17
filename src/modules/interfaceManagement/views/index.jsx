@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './index.less';
-import { worm } from 'utils';
+import * as Fetch from '../apis';
 import { Select, Row, Col, Input, Button, Modal, message } from 'antd';
 import JsonFormat from 'json-format';
 let didMount = false;
@@ -22,16 +22,15 @@ export default () => {
 
 
   const fetchCurrentTemplate = () => {
-    worm.get('http://localhost:3000/getCurrent')
-      .then(res => {
-        if (res && res.success) {
-          setCurrentTemplate(res.data || {});
-        }
-      })
+    Fetch.getCurrent().then(res => {
+      if (res && res.success) {
+        setCurrentTemplate(res.data || {});
+      }
+    })
   }
   function fetchPathDict(id) {
     setIsPathLoading(true);
-    worm.get('http://localhost:3000/getPathDict', { id })
+    Fetch.getPathDict({ id })
       .then(res => {
         if (res && res.success) {
           let data = res.data || {};
@@ -42,14 +41,13 @@ export default () => {
   }
   const fetchTemplateList = () => {
     setIsTemplateLoading(true);
-    worm.get('http://localhost:3000/getConfig')
-      .then(res => {
-        if (res && res.success) {
-          let data = res.data || [];
-          setTemplateList(data);
-        }
-        setIsTemplateLoading(false);
-      });
+    Fetch.getConfig().then(res => {
+      if (res && res.success) {
+        let data = res.data || [];
+        setTemplateList(data);
+      }
+      setIsTemplateLoading(false);
+    });
   }
   const handleTemplateChange = (id) => {
     setTemplateId(id);
@@ -60,7 +58,7 @@ export default () => {
   const handlePathChange = (path) => {
     setPath(path);
     let id = pathDict[path].id;
-    worm.get('http://localhost:3000/getPathData', {
+    Fetch.getPathData({
       id
     })
       .then(res => {
@@ -76,7 +74,7 @@ export default () => {
   }
   const handleUpdateClick = () => {
     let data = pathData.replace(/\s*/g, "");
-    worm.post('http://localhost:3000/updatePathData', {
+    Fetch.updatePathData({
       templateId,
       path,
       pathData: data
@@ -97,7 +95,7 @@ export default () => {
   }
   const submitAddTemplate = () => {
     setIsShowAddTemplate(false);
-    worm.post('http://localhost:3000/createTemplate', {
+    Fetch.createTemplate({
       name: templateName
     })
       .then(res => {
@@ -120,7 +118,7 @@ export default () => {
   }
   const submitAddPath = () => {
     setIsShowAddPath(false);
-    worm.post('http://localhost:3000/createPath', {
+    Fetch.createPath({
       templateId,
       path: pathName,
       method: method
@@ -138,7 +136,7 @@ export default () => {
       });
       return;
     }
-    worm.post('http://localhost:3000/setCurrent', {
+    Fetch.setCurrent({
       templateId
     })
       .then(res => {
@@ -152,7 +150,7 @@ export default () => {
   }
   const deleteTemplate = () => {
     const onOk = function () {
-      worm.post('http://localhost:3000/deleteTemplate', {
+      Fetch.deleteTemplate({
         templateId
       })
         .then(res => {
@@ -180,7 +178,7 @@ export default () => {
   }
   const handleDeletePath = () => {
     const onOk = function () {
-      worm.post('http://localhost:3000/deletePath', {
+      Fetch.deletePath({
         templateId,
         path
       })
@@ -208,7 +206,7 @@ export default () => {
   }
 
   const handleReload = () => {
-    worm.get('http://localhost:3000/reload').then(res => {
+    Fetch.reload().then(res => {
       if (res && res.success) {
         message.success('重载服务成功，请等待10秒再调用接口');
       }

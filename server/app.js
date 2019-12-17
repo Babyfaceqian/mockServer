@@ -25,19 +25,16 @@ async function start() {
       await next();
     });
 
-    // app.use(cors({
-    //   origin: function (ctx) {
-    //     if (ctx.url === '/test') {
-    //       return "*"; // 允许来自所有域名请求
-    //     }
-    //     return "http://www.zhangqiantech.com";
-    //   },
-    //   exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
-    //   maxAge: 5,
-    //   credentials: true,
-    //   allowMethods: ['GET', 'POST', 'DELETE'],
-    //   allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    // }))
+    app.use(cors({
+      origin: function (ctx) {
+        return ""; // 替换域名
+      },
+      // exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
+      // maxAge: 5,
+      credentials: true, // 如果客户端开启 credential，则要设置为 true
+      // allowMethods: ['GET', 'POST', 'DELETE'],
+      // allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    }))
     app.use(logger())
     app.use(bodyParser());
     const router = require('./router/router')()
