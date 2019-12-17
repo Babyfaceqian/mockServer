@@ -13,33 +13,26 @@ exports.getConfig = async (ctx, next) => {
 exports.createTemplate = async (ctx, next) => {
   let name = ctx.request.body.name;
   let config = getJSON('config') || [];
-  if (config.some(d => d.name === name)) {
-    ctx.body = {
-      success: false,
-      data: null
-    }
-  } else {
-    let id = uuid();
-    config.push({
-      id,
-      name,
-    });
-    let jsonStr = JsonFormat(config);
-    fs.writeFile(getFilePath('config'), jsonStr, 'utf8', (err) => {
-      if (err) throw err;
-      console.log('done');
-    });
-    let tempaltes = getJSON('templates') || {};
-    tempaltes[id] = {};
-    let tempaltesStr = JsonFormat(tempaltes);
-    fs.writeFile(getFilePath('templates'), tempaltesStr, 'utf8', (err) => {
-      if (err) throw err;
-      console.log('done');
-    });
-    ctx.body = {
-      success: true,
-      data: null
-    }
+  let id = uuid();
+  config.push({
+    id,
+    name,
+  });
+  let jsonStr = JsonFormat(config);
+  fs.writeFile(getFilePath('config'), jsonStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let tempaltes = getJSON('templates') || {};
+  tempaltes[id] = {};
+  let tempaltesStr = JsonFormat(tempaltes);
+  fs.writeFile(getFilePath('templates'), tempaltesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true,
+    data: id
   }
   return next;
 }
@@ -51,9 +44,11 @@ exports.createPath = async (ctx, next) => {
   let method = body.method.toUpperCase();
   let tempaltes = getJSON('templates') || {};
   let pathId = uuid();
+  let fnId = uuid();
   tempaltes[templateId][path] = {
-    id: pathId,
-    method
+    ids: [pathId],
+    method,
+    fnId
   };
   let jsonStr = JsonFormat(tempaltes);
   fs.writeFile(getFilePath('templates'), jsonStr, 'utf8', (err) => {
@@ -62,7 +57,7 @@ exports.createPath = async (ctx, next) => {
   });
   ctx.body = {
     success: true,
-    data: null
+    data: path
   }
 }
 
@@ -90,29 +85,19 @@ exports.getPathData = async (ctx, next) => {
 
 exports.updatePathData = async (ctx, next) => {
   let body = ctx.request.body;
-  console.log('body', body, ctx);
-  let templateId = body.templateId;
-  let path = body.path;
+  let pathDataId = body.pathDataId;
   let pathData = body.pathData;
-  if (!templateId || !path) {
+  if (!pathDataId || !pathData) {
     ctx.body = {
       success: false,
       data: null
     }
     return next
   }
-  let templates = getJSON('templates') || {};
-  templates[templateId] = templates[templateId] || {};
   let indexes = getJSON('indexes') || {};
-  let pataDataId = templates[templateId][path].id;
-  indexes[pataDataId] = JSON.parse(pathData);
-  let templatesJsonStr = JsonFormat(templates);
-  fs.writeFile(getFilePath('templates'), templatesJsonStr, 'utf8', (err) => {
-    if (err) throw err;
-    console.log('done');
-  })
-  let indexesJsonStr = JsonFormat(indexes);
-  fs.writeFile(getFilePath('indexes'), indexesJsonStr, 'utf8', (err) => {
+  indexes[pathDataId] = JSON.parse(pathData);
+  let indexesStr = JsonFormat(indexes);
+  fs.writeFile(getFilePath('indexes'), indexesStr, 'utf8', (err) => {
     if (err) throw err;
     console.log('done');
   })
@@ -183,10 +168,14 @@ exports.deletePath = async (ctx, next) => {
   let path = body.path;
   let templates = getJSON('templates') || {};
   let pathObj = templates[templateId][path];
-  let pathDataId = pathObj.id;
+  let pathDataIds = pathObj.ids.slice();
   delete templates[templateId][path];
   let indexes = getJSON('indexes') || {};
-  delete indexes[pathDataId];
+  pathDataIds.forEach(id => {
+    delete indexes[id];
+  })
+  let fns = getJSON('fns') || {};
+  delete fns[pathObj.fnId];
   let templatesStr = JsonFormat(templates);
   fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
     if (err) throw err;
@@ -194,6 +183,11 @@ exports.deletePath = async (ctx, next) => {
   });
   let indexesStr = JsonFormat(indexes);
   fs.writeFile(getFilePath('indexes'), indexesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let fnsStr = JsonFormat(fns);
+  fs.writeFile(getFilePath('fns'), fnsStr, 'utf8', (err) => {
     if (err) throw err;
     console.log('done');
   });
@@ -220,5 +214,78 @@ exports.getCurrent = async (ctx, next) => {
       list: pathList
     }
   };
+  return next;
+}
+
+exports.updatePathFn = async (ctx, next) => {
+  let body = ctx.request.body;
+  let fns = getJSON('fns') || {};
+  let fnId = body.fnId;
+  let fn = body.fn;
+  fns[fnId] = fn;
+  let fnsStr = JsonFormat(fns);
+  fs.writeFile(getFilePath('fns'), fnsStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true,
+    data: null
+  };
+  return next;
+}
+
+exports.createPathData = async (ctx, next) => {
+  let body = ctx.request.body;
+  let templateId = body.templateId;
+  let path = body.path;
+  let templates = getJSON('templates') || {};
+  let pathDataId = uuid();
+  templates[templateId][path].ids.push(pathDataId);
+  let templatesStr = JsonFormat(templates);
+  fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true,
+    data: null
+  };
+  return next;
+}
+
+exports.getFn = async (ctx, next) => {
+  let id = ctx.query.id;
+  let fns = getJSON('fns') || {};
+  ctx.body = {
+    success: true,
+    data: fns[id]
+  }
+  return next;
+}
+
+exports.deletePathData = async (ctx, next) => {
+  let body = ctx.request.body;
+  let templateId = body.templateId;
+  let path = body.path;
+  let index = body.index;
+  let templates = getJSON('templates') || {};
+  let id = templates[templateId][path].ids[index];
+  templates[templateId][path].ids.splice(index, 1);
+  let indexes = getJSON('indexes') || {};
+  delete indexes[id];
+  let templatesStr = JsonFormat(templates);
+  fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let indexesStr = JsonFormat(indexes);
+  fs.writeFile(getFilePath('indexes'), indexesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true
+  }
   return next;
 }

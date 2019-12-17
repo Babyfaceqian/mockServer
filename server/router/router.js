@@ -26,13 +26,17 @@ module.exports = function () {
   router.post('/deleteTemplate', App.deleteTemplate);
   router.post('/deletePath', App.deletePath);
   router.get('/getCurrent', App.getCurrent);
+  router.post('/updatePathFn', App.updatePathFn);
+  router.post('/createPathData', App.createPathData);
+  router.get('/getFn', App.getFn);
+  router.post('/deletePathData', App.deletePathData);
 
   let pathObj = templates[current];
   if (pathObj) {
     Object.keys(pathObj).forEach(key => {
       let obj = pathObj[key];
       let method = METHOD[obj.method];
-      router[method](key, Mock.getMockData(obj.id));
+      router[method](key, Mock.getMockData(obj));
     })
   }
   return router

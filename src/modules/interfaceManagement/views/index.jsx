@@ -1,25 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import styles from './index.less';
 import * as Fetch from '../apis';
-import { Select, Row, Col, Input, Button, Modal, message } from 'antd';
+import { Select, Row, Col, Input, Button, Modal, message, Tooltip } from 'antd';
 import JsonFormat from 'json-format';
 let didMount = false;
 export default () => {
+  // 模板
   const [templateId, setTemplateId] = useState('');
   const [templateList, setTemplateList] = useState([]);
+  // 接口
   const [pathDict, setPathDict] = useState({});
   const [path, setPath] = useState('');
+  // 函数
+  const [fn, setFn] = useState('');
+  // 接口数据
+  const [dataIndex, setDataIndex] = useState('');
   const [pathData, setPathData] = useState('{}');
+  // 添加模板
   const [isShowAddTemplate, setIsShowAddTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  // 添加接口
   const [isShowAddPath, setIsShowAddPath] = useState(false);
   const [pathName, setPathName] = useState('');
   const [method, setMethod] = useState('GET');
+  // 当前选用模板
   const [currentTemplate, setCurrentTemplate] = useState({});
   // loading状态
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
   const [isPathLoading, setIsPathLoading] = useState(false);
 
+  // 变量
+  let pathObj = pathDict[path] || {};
 
   const fetchCurrentTemplate = () => {
     Fetch.getCurrent().then(res => {
@@ -28,23 +39,25 @@ export default () => {
       }
     })
   }
-  function fetchPathDict(id) {
+  function fetchPathDict(id, cb) {
     setIsPathLoading(true);
     Fetch.getPathDict({ id })
       .then(res => {
         if (res && res.success) {
           let data = res.data || {};
           setPathDict(data);
+          cb && cb();
         }
         setIsPathLoading(false);
       });
   }
-  const fetchTemplateList = () => {
+  const fetchTemplateList = (cb) => {
     setIsTemplateLoading(true);
     Fetch.getConfig().then(res => {
       if (res && res.success) {
         let data = res.data || [];
         setTemplateList(data);
+        cb && cb();
       }
       setIsTemplateLoading(false);
     });
@@ -52,12 +65,11 @@ export default () => {
   const handleTemplateChange = (id) => {
     setTemplateId(id);
     setPath('');
+    setDataIndex('');
     setPathDict({});
     // fetchPathDict(id);
   }
-  const handlePathChange = (path) => {
-    setPath(path);
-    let id = pathDict[path].id;
+  const fetchGetPathData = (id) => {
     Fetch.getPathData({
       id
     })
@@ -68,15 +80,32 @@ export default () => {
           setPathData(data);
         }
       });
+  };
+  const fetchGetFn = (id) => {
+    Fetch.getFn({ id }).then(res => {
+      if (res && res.success) {
+        setFn(res.data);
+      }
+    })
+  }
+  const handlePathChange = (path) => {
+    setPath(path);
+    let pathObj = pathDict[path];
+    let id = pathObj.ids[0];
+    let fnId = pathObj.fnId;
+    fetchGetFn(fnId);
+    setDataIndex('');
+    fetchGetPathData(id);
   }
   const handlePathDataChange = (e) => {
     setPathData(e.target.value);
   }
   const handleUpdateClick = () => {
     let data = pathData.replace(/\s*/g, "");
+    let pathObj = pathDict[path];
+    let pathDataId = pathObj.ids[dataIndex];
     Fetch.updatePathData({
-      templateId,
-      path,
+      pathDataId,
       pathData: data
     })
       .then(res => {
@@ -100,12 +129,16 @@ export default () => {
     })
       .then(res => {
         if (res && res.success) {
-          // fetchTemplateList();
           message.success({
             content: '添加成功'
           });
+          let id = res.data || '';
+          fetchTemplateList(() => {
+            setTemplateId(id);
+          })
         }
       });
+    setTemplateName('');
   }
   const handleAddPath = () => {
     setIsShowAddPath(true);
@@ -125,9 +158,13 @@ export default () => {
     })
       .then(res => {
         if (res && res.success) {
-          setMethod('GET');
+          fetchPathDict(templateId, () => {
+            setPath(pathName);
+          })
         }
       });
+    setPathName('');
+    setMethod('GET');
   }
   const submitCurrent = () => {
     if (!templateId) {
@@ -158,6 +195,7 @@ export default () => {
             fetchTemplateList();
             setTemplateId('');
             setPath('');
+            setDataIndex('');
             message.success({
               content: '删除成功'
             });
@@ -186,6 +224,7 @@ export default () => {
           if (res && res.success) {
             fetchPathDict();
             setPath('');
+            setDataIndex('');
             message.success({
               content: '删除成功'
             });
@@ -205,12 +244,64 @@ export default () => {
     });
   }
 
+  const handleFnChange = (e) => {
+    setFn(e.target.value);
+  }
+
+  const updatePathFn = () => {
+    let pathObj = pathDict[path];
+    console.log('pathObj', pathObj)
+    let fnId = pathObj.fnId;
+    Fetch.updatePathFn({ fnId, fn }).then(res => {
+      if (res && res.success) {
+        message.success('更新成功')
+      }
+    })
+  }
+
   const handleReload = () => {
     Fetch.reload().then(res => {
       if (res && res.success) {
         message.success('重载服务成功，请等待10秒再调用接口');
       }
     })
+  }
+
+  const handleDataIndexChange = (index) => {
+    setDataIndex(index);
+    let id = pathObj.ids[index];
+    fetchGetPathData(id);
+  }
+
+  const handleAddPathData = () => {
+    Fetch.addPathData({ templateId, path }).then(res => {
+      if (res && res.success) {
+        message.success('添加成功');
+        fetchPathDict(templateId);
+      }
+    })
+  }
+
+  const handleDeletePathData = () => {
+    if (pathObj.ids.length === 1) {
+      message.warning('至少存在一个条件数据');
+      return;
+    }
+    const onOk = () => {
+      Fetch.deletePathData({ templateId, path, index: dataIndex }).then(res => {
+        if (res && res.success) {
+          fetchPathDict(templateId);
+          setDataIndex('');
+        }
+      })
+    }
+    Modal.confirm({
+      title: 'Confirm',
+      content: '确定要删除吗？',
+      okText: '确认',
+      cancelText: '取消',
+      onOk
+    });
   }
 
   // 副作用
@@ -229,15 +320,26 @@ export default () => {
             选择模板：
         </Col>
           <Col span={8}>
-            <Select onChange={handleTemplateChange} className={styles.select} value={templateId} onFocus={fetchTemplateList} loading={isTemplateLoading}>
+            <Select
+              showSearch
+              onChange={handleTemplateChange}
+              className={styles.select}
+              value={templateId}
+              onFocus={fetchTemplateList}
+              loading={isTemplateLoading}
+              filterOption={(input, option) =>
+                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+            >
               {templateList.map((d, i) => {
                 return <Select.Option key={i} value={d.id}>{d.name}</Select.Option>
               })}
             </Select>
           </Col>
-          <Button type="primary" className={styles.rightBtn} onClick={handleAddTemplate}>新建模板</Button>
-          <Button type="primary" className={styles.rightBtn} onClick={submitCurrent}>选用模板</Button>
-          <Button type="danger" className={styles.rightBtn} onClick={deleteTemplate} disabled={!templateId}>删除模板</Button>
+          <Tooltip title="新建模板"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddTemplate}></Button></Tooltip>
+          <Tooltip title="选用模板"><Button type="primary" icon="check" className={styles.rightBtn} onClick={submitCurrent}></Button></Tooltip>
+          <Tooltip title="重载服务"><Button type="primary" icon="reload" className={styles.rightBtn} onClick={handleReload}></Button></Tooltip>
+          <Tooltip title="删除模板"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={deleteTemplate} disabled={!templateId}></Button></Tooltip>
         </Row>
         {/* 接口 */}
         {
@@ -246,79 +348,92 @@ export default () => {
               选择接口：
         </Col>
             <Col span={8}>
-              <Select onChange={handlePathChange} className={styles.select} value={path} onFocus={() => fetchPathDict(templateId)} loading={isPathLoading}>
+              <Select
+                showSearch
+                onChange={handlePathChange}
+                className={styles.select}
+                value={path}
+                onFocus={() => fetchPathDict(templateId)}
+                loading={isPathLoading}
+                filterOption={(input, option) =>
+                  option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
+              >
                 {Object.keys(pathDict).map((key, i) => {
                   return <Select.Option key={i} value={key}>{key}</Select.Option>
                 })}
               </Select>
             </Col>
-            <Button type="primary" className={styles.rightBtn} onClick={handleAddPath}>新建接口</Button>
-            <Button type="danger" className={styles.rightBtn} onClick={handleDeletePath} disabled={!path}>删除接口</Button>
+            <Tooltip title="新建接口"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddPath}></Button></Tooltip>
+            <Tooltip title="删除接口"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={handleDeletePath} disabled={!path}></Button></Tooltip>
           </Row>
         }
-        {/* 接口数据 */}
+        {/* 函数 */}
         {
           path && <Row className={styles.row}>
             <Col span={4} className={styles.label}>
-              接口数据：
+              函数：
         </Col>
-            <Col span={20}>
+            <Col span={12}>
+              <Input.TextArea value={fn} rows={10} onChange={handleFnChange} />
+            </Col>
+            <Tooltip title="更新函数"><Button type="primary" icon="sync" className={styles.rightBtn} onClick={updatePathFn}></Button></Tooltip>
+          </Row>
+        }
+        {/* 条件数据 */}
+        {
+          path && <Row className={styles.row}>
+            <Col span={4} className={styles.label}>
+              条件数据：
+        </Col>
+            <Col span={8}>
+              <Select
+                showSearch
+                value={dataIndex}
+                onChange={handleDataIndexChange}
+                className={styles.select}
+                filterOption={(input, option) =>
+                  option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
+              >
+                {(pathObj.ids || []).map((d, i) => {
+                  return (
+                    <Select.Option value={i + ''} key={i}>
+                      {i}
+                    </Select.Option>
+                  )
+                })}
+              </Select>
+            </Col>
+            <Tooltip title="添加数据"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddPathData}></Button></Tooltip>
+            <Tooltip title="删除数据"><Button type="danger" icon="minus" className={styles.rightBtn} disabled={!dataIndex} onClick={handleDeletePathData}></Button></Tooltip>
+          </Row>
+        }
+      </div>
+      <div className={styles.right}>
+        {/* 接口数据 */}
+        {
+          dataIndex && <Row className={styles.row}>
+            <Col span={24}>
+              接口数据：
+            </Col>
+          </Row>
+        }
+        {
+          dataIndex && <Row className={styles.row}>
+            <Col span={24}>
               <Input.TextArea value={pathData} onChange={handlePathDataChange} rows="20" />
             </Col>
           </Row>
         }
-
         {
-          path && <Row className={styles.row}>
-            <Col offset={4}>
-              <Button type="primary" onClick={handleUpdateClick}>更新</Button>
+          dataIndex && <Row className={styles.row}>
+            <Col>
+              <Tooltip title="更新数据"><Button type="primary" icon="sync" onClick={handleUpdateClick}></Button></Tooltip>
             </Col>
           </Row>
         }
-        {/* 新建模板 */}
-        <Modal
-          visible={isShowAddTemplate}
-          onOk={submitAddTemplate}
-          onCancel={() => setIsShowAddTemplate(false)}
-        >
-          <Row className={styles.row}>
-            <Col span={6} className={styles.label}>
-              模板名称：
-        </Col>
-            <Col span={14}>
-              <Input value={templateName} onChange={handleTemplateNameChange} />
-            </Col>
-          </Row>
-        </Modal>
-        {/* 新建接口 */}
-        <Modal
-          visible={isShowAddPath}
-          onOk={submitAddPath}
-          onCancel={() => setIsShowAddPath(false)}
-        >
-          <Row className={styles.row}>
-            <Col span={6} className={styles.label}>
-              接口名称：
-        </Col>
-            <Col span={14}>
-              <Input value={pathName} onChange={handlePathNameChange} />
-            </Col>
-          </Row>
-          <Row>
-            <Col span={6} className={styles.label}>
-              方法：
-        </Col>
-            <Col span={14}>
-              <Select value={method} onChange={handleMethodChange} >
-                <Select.Option value="GET">GET</Select.Option>
-                <Select.Option value="POST">POST</Select.Option>
-              </Select>
-            </Col>
-          </Row>
-        </Modal>
-      </div>
-      <div className={styles.right}>
-        <Row className={styles.row}>
+        {/* <Row className={styles.row}>
           <Col span={6} className={styles.label}>
             当前模板：
         </Col>
@@ -342,8 +457,53 @@ export default () => {
               })}
             </ul>
           </Col>
-        </Row>
+        </Row> */}
       </div>
+
+
+      {/* 新建模板 */}
+      <Modal
+        title="新建模板"
+        visible={isShowAddTemplate}
+        onOk={submitAddTemplate}
+        onCancel={() => setIsShowAddTemplate(false)}
+      >
+        <Row className={styles.row}>
+          <Col span={6} className={styles.label}>
+            模板名称：
+        </Col>
+          <Col span={14}>
+            <Input value={templateName} onChange={handleTemplateNameChange} />
+          </Col>
+        </Row>
+      </Modal>
+      {/* 新建接口 */}
+      <Modal
+        title="新建接口"
+        visible={isShowAddPath}
+        onOk={submitAddPath}
+        onCancel={() => setIsShowAddPath(false)}
+      >
+        <Row className={styles.row}>
+          <Col span={6} className={styles.label}>
+            接口名称：
+        </Col>
+          <Col span={14}>
+            <Input value={pathName} onChange={handlePathNameChange} />
+          </Col>
+        </Row>
+        <Row>
+          <Col span={6} className={styles.label}>
+            方法：
+        </Col>
+          <Col span={14}>
+            <Select value={method} onChange={handleMethodChange} >
+              <Select.Option value="GET">GET</Select.Option>
+              <Select.Option value="POST">POST</Select.Option>
+            </Select>
+          </Col>
+        </Row>
+      </Modal>
     </div>
   )
 }

@@ -22,3 +22,7 @@ export const setCurrent = makeRequestCreator(PREFIX + '/setCurrent', 'post');
 export const deleteTemplate = makeRequestCreator(PREFIX + '/deleteTemplate', 'post');
 export const deletePath = makeRequestCreator(PREFIX + '/deletePath', 'post');
 export const reload = makeRequestCreator(PREFIX + '/reload', 'get');
+export const updatePathFn = makeRequestCreator(PREFIX + '/updatePathFn', 'post');
+export const addPathData = makeRequestCreator(PREFIX + '/createPathData', 'post');
+export const getFn = makeRequestCreator(PREFIX + '/getFn', 'get');
+export const deletePathData = makeRequestCreator(PREFIX + '/deletePathData', 'post');
