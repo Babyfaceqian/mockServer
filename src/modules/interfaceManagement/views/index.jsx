@@ -164,6 +164,9 @@ export default () => {
         }
       });
     setPathName('');
+    setDataIndex('');
+    setFn('');
+    setPathData('');
     setMethod('GET');
   }
   const submitCurrent = () => {
