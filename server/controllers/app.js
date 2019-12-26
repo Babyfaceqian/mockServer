@@ -289,3 +289,89 @@ exports.deletePathData = async (ctx, next) => {
   }
   return next;
 }
+
+exports.copyTemplate = async (ctx, next) => {
+  let name = ctx.request.body.name;
+  let copyId = ctx.request.body.copyId;
+  let config = getJSON('config') || [];
+  let id = uuid();
+  config.push({
+    id,
+    name,
+  });
+  let jsonStr = JsonFormat(config);
+  fs.writeFile(getFilePath('config'), jsonStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let templates = getJSON('templates') || {};
+  let copyTemplate = templates[copyId];
+  let indexes = getJSON('indexes') || {};
+  let fns = getJSON('fns') || {};
+  templates[id] = {};
+  Object.keys(copyTemplate).forEach(path => {
+    templates[id][path] = {};
+    templates[id][path].ids = copyTemplate[path].ids.map(d => {
+      let pathId = uuid();
+      indexes[pathId] = indexes[d];
+      return pathId;
+    });
+    templates[id][path].method = copyTemplate[path].method;
+    let fnId = uuid();
+    templates[id][path].fnId = fnId;
+    fns[fnId] = fns[copyTemplate[path].fnId];
+  })
+  let templatesStr = JsonFormat(templates);
+  fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let indexesStr = JsonFormat(indexes);
+  fs.writeFile(getFilePath('indexes'), indexesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let fnsStr = JsonFormat(fns);
+  fs.writeFile(getFilePath('fns'), fnsStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true,
+    data: id
+  }
+  return next;
+}
+
+exports.editTemplate = async (ctx, next) => {
+  let name = ctx.request.body.name;
+  let id = ctx.request.body.id;
+  let config = getJSON('config') || [];
+  config.find(d => d.id === id).name = name;
+  let configStr = JsonFormat(config);
+  fs.writeFile(getFilePath('config'), configStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true
+  }
+  return next;
+}
+
+exports.editPath = async (ctx, next) => {
+  let method = ctx.request.body.method;
+  let path = ctx.request.body.path;
+  let id = ctx.request.body.id;
+  let templates = getJSON('templates') || [];
+  templates[id][path].method = method
+  let templatesStr = JsonFormat(templates);
+  fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  ctx.body = {
+    success: true
+  }
+  return next;
+}

@@ -30,7 +30,10 @@ module.exports = function () {
   router.post('/createPathData', App.createPathData);
   router.get('/getFn', App.getFn);
   router.post('/deletePathData', App.deletePathData);
-
+  router.post('/copyTemplate', App.copyTemplate);
+  router.post('/editTemplate', App.editTemplate);
+  router.post('/editPath', App.editPath);
+  
   let pathObj = templates[current];
   if (pathObj) {
     Object.keys(pathObj).forEach(key => {

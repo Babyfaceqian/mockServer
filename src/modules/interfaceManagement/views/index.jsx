@@ -19,16 +19,23 @@ export default () => {
   // 添加模板
   const [isShowAddTemplate, setIsShowAddTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  // 复制模板
+  const [isShowCopyTemplate, setIsShowCopyTemplate] = useState(false);
+  // 编辑模板
+  const [isShowEditTemplate, setIsShowEditTemplate] = useState(false);
   // 添加接口
   const [isShowAddPath, setIsShowAddPath] = useState(false);
   const [pathName, setPathName] = useState('');
   const [method, setMethod] = useState('GET');
+  // 编辑接口
+  const [isShowEditPath, setIsShowEditPath] = useState(false);
   // 当前选用模板
   const [currentTemplate, setCurrentTemplate] = useState({});
   // loading状态
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
   const [isPathLoading, setIsPathLoading] = useState(false);
-
+  // 重载提示
+  const [isNeedToReload, setIsNeedToReload] = useState(false);
   // 变量
   let pathObj = pathDict[path] || {};
 
@@ -144,7 +151,7 @@ export default () => {
     setIsShowAddPath(true);
   }
   const handlePathNameChange = (e) => {
-    setPathName(e.target.value)
+    setPathName(e.target.value.trim())
   }
   const handleMethodChange = (value) => {
     setMethod(value);
@@ -160,7 +167,10 @@ export default () => {
         if (res && res.success) {
           fetchPathDict(templateId, () => {
             setPath(pathName);
-          })
+          });
+          if (currentTemplate.id === templateId) {
+            setIsNeedToReload(true);
+          }
         }
       });
     setPathName('');
@@ -182,6 +192,9 @@ export default () => {
       .then(res => {
         if (res && res.success) {
           fetchCurrentTemplate();
+          if (currentTemplate.id !== templateId) {
+            setIsNeedToReload(true);
+          }
           message.success({
             content: '选择成功'
           });
@@ -231,6 +244,9 @@ export default () => {
             message.success({
               content: '删除成功'
             });
+            if (currentTemplate.id === templateId) {
+              setIsNeedToReload(true);
+            }
           } else {
             message.warning({
               content: res.msg
@@ -248,7 +264,7 @@ export default () => {
   }
 
   const handleFnChange = (e) => {
-    setFn(e.target.value);
+    setFn(e.target.value.trim());
   }
 
   const updatePathFn = () => {
@@ -266,6 +282,7 @@ export default () => {
     Fetch.reload().then(res => {
       if (res && res.success) {
         message.success('重载服务成功，请等待10秒再调用接口');
+        setIsNeedToReload(false);
       }
     })
   }
@@ -307,6 +324,77 @@ export default () => {
     });
   }
 
+  const handleCopyTemplate = () => {
+    setIsShowCopyTemplate(true);
+  }
+
+  const submitCopyTemplate = () => {
+    setIsShowCopyTemplate(false);
+    Fetch.copyTemplate({
+      copyId: templateId,
+      name: templateName
+    })
+      .then(res => {
+        if (res && res.success) {
+          message.success({
+            content: '复制成功'
+          });
+          let id = res.data || '';
+          fetchTemplateList(() => {
+            setTemplateId(id);
+          })
+        }
+      });
+    setTemplateName('');
+  }
+
+  const handleEditTemplate = () => {
+    setIsShowEditTemplate(true);
+  }
+
+  const submitEditTemplate = () => {
+    setIsShowEditTemplate(false);
+    Fetch.editTemplate({
+      id: templateId,
+      name: templateName
+    })
+      .then(res => {
+        if (res && res.success) {
+          message.success({
+            content: '修改成功'
+          });
+          let id = res.data || '';
+          fetchTemplateList();
+        }
+      });
+    setTemplateName('');
+  }
+
+  const handleEditPath = () => {
+    setIsShowEditPath(true);
+  }
+
+  const submitEditPath = () => {
+    setIsShowEditPath(false);
+    Fetch.editPath({
+      id: templateId,
+      path,
+      method
+    })
+      .then(res => {
+        if (res && res.success) {
+          message.success({
+            content: '修改成功'
+          });
+          fetchPathDict(templateId);
+          if (currentTemplate.id === templateId) {
+            setIsNeedToReload(true);
+          }
+        }
+      });
+    setMethod('GET');
+  }
+
   // 副作用
   useEffect(() => {
     if (!didMount) {
@@ -314,6 +402,7 @@ export default () => {
       fetchCurrentTemplate();
     }
   });
+  console.log('isNeedToReload', isNeedToReload);
   return (
     <div className={styles.interfaceManagement}>
       <div className={styles.left}>
@@ -340,9 +429,13 @@ export default () => {
             </Select>
           </Col>
           <Tooltip title="新建模板"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddTemplate}></Button></Tooltip>
-          <Tooltip title="选用模板"><Button type="primary" icon="check" className={styles.rightBtn} onClick={submitCurrent}></Button></Tooltip>
-          <Tooltip title="重载服务"><Button type="primary" icon="reload" className={styles.rightBtn} onClick={handleReload}></Button></Tooltip>
+          <Tooltip title="复制模板"><Button type="primary" icon="copy" className={styles.rightBtn} onClick={handleCopyTemplate} disabled={!templateId}></Button></Tooltip>
+          <Tooltip title="编辑模板"><Button type="primary" icon="edit" className={styles.rightBtn} onClick={handleEditTemplate} disabled={!templateId}></Button></Tooltip>
+          <Tooltip title="选用模板"><Button type="primary" icon="check" className={styles.rightBtn} onClick={submitCurrent} disabled={!templateId}></Button></Tooltip>
           <Tooltip title="删除模板"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={deleteTemplate} disabled={!templateId}></Button></Tooltip>
+          <Tooltip title="重载服务"><Button type="primary" icon="reload" className={styles.rightBtn} onClick={handleReload}>
+            {isNeedToReload && <span className={styles.dotTip}></span>}
+          </Button></Tooltip>
         </Row>
         {/* 接口 */}
         {
@@ -368,6 +461,7 @@ export default () => {
               </Select>
             </Col>
             <Tooltip title="新建接口"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddPath}></Button></Tooltip>
+            <Tooltip title="编辑接口"><Button type="primary" icon="edit" className={styles.rightBtn} onClick={handleEditPath} disabled={!path}></Button></Tooltip>
             <Tooltip title="删除接口"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={handleDeletePath} disabled={!path}></Button></Tooltip>
           </Row>
         }
@@ -480,6 +574,39 @@ export default () => {
           </Col>
         </Row>
       </Modal>
+      {/* 复制模板 */}
+      <Modal
+        title="复制模板"
+        visible={isShowCopyTemplate}
+        onOk={submitCopyTemplate}
+        onCancel={() => setIsShowCopyTemplate(false)}
+      >
+        <Row className={styles.row}>
+          <Col span={6} className={styles.label}>
+            模板名称：
+        </Col>
+          <Col span={14}>
+            <Input value={templateName} onChange={handleTemplateNameChange} />
+          </Col>
+        </Row>
+      </Modal>
+
+      {/* 编辑模板 */}
+      <Modal
+        title="编辑模板"
+        visible={isShowEditTemplate}
+        onOk={submitEditTemplate}
+        onCancel={() => setIsShowEditTemplate(false)}
+      >
+        <Row className={styles.row}>
+          <Col span={6} className={styles.label}>
+            模板名称：
+        </Col>
+          <Col span={14}>
+            <Input value={templateName} onChange={handleTemplateNameChange} />
+          </Col>
+        </Row>
+      </Modal>
       {/* 新建接口 */}
       <Modal
         title="新建接口"
@@ -495,6 +622,25 @@ export default () => {
             <Input value={pathName} onChange={handlePathNameChange} />
           </Col>
         </Row>
+        <Row>
+          <Col span={6} className={styles.label}>
+            方法：
+        </Col>
+          <Col span={14}>
+            <Select value={method} onChange={handleMethodChange} >
+              <Select.Option value="GET">GET</Select.Option>
+              <Select.Option value="POST">POST</Select.Option>
+            </Select>
+          </Col>
+        </Row>
+      </Modal>
+      {/* 编辑接口 */}
+      <Modal
+        title="编辑接口"
+        visible={isShowEditPath}
+        onOk={submitEditPath}
+        onCancel={() => setIsShowEditPath(false)}
+      >
         <Row>
           <Col span={6} className={styles.label}>
             方法：

@@ -26,3 +26,6 @@ export const updatePathFn = makeRequestCreator(PREFIX + '/updatePathFn', 'post')
 export const addPathData = makeRequestCreator(PREFIX + '/createPathData', 'post');
 export const getFn = makeRequestCreator(PREFIX + '/getFn', 'get');
 export const deletePathData = makeRequestCreator(PREFIX + '/deletePathData', 'post');
+export const copyTemplate = makeRequestCreator(PREFIX + '/copyTemplate', 'post');
+export const editTemplate = makeRequestCreator(PREFIX + '/editTemplate', 'post');
+export const editPath = makeRequestCreator(PREFIX + '/editPath', 'post');
