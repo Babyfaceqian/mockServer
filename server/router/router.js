@@ -4,12 +4,12 @@ import Router from 'koa-router'
 import App from '../controllers/app'
 import Reload from '../controllers/reload';
 import Mock from '../controllers/mock'
-import templates from '../data/templates.json';
 const METHOD = {
   GET: 'get',
   POST: 'post'
 }
-const current = require('../data/currentTemplate.json').current;
+import templates from '../data/templates.json';
+const currentIds = require('../data/currentTemplate.json');
 module.exports = function () {
   var router = new Router({
     // prefix: '/api'
@@ -33,14 +33,17 @@ module.exports = function () {
   router.post('/copyTemplate', App.copyTemplate);
   router.post('/editTemplate', App.editTemplate);
   router.post('/editPath', App.editPath);
-  
-  let pathObj = templates[current];
-  if (pathObj) {
-    Object.keys(pathObj).forEach(key => {
-      let obj = pathObj[key];
-      let method = METHOD[obj.method];
-      router[method](key, Mock.getMockData(obj));
+
+  let pathObj = {};
+  currentIds.forEach(id => {
+    Object.keys(templates[id]).forEach(path => {
+      pathObj[path] = templates[id][path];
     })
-  }
+  })
+  Object.keys(pathObj).forEach(key => {
+    let obj = pathObj[key];
+    let method = METHOD[obj.method];
+    router[method](key, Mock.getMockData(obj));
+  })
   return router
 }

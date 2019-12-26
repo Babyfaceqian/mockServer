@@ -3,9 +3,8 @@ import styles from './index.less';
 import * as Fetch from '../apis';
 import { Select, Row, Col, Input, Button, Modal, message, Tooltip } from 'antd';
 import JsonFormat from 'json-format';
-let didMount = false;
 export default () => {
-  // 模板
+  // 接口集
   const [templateId, setTemplateId] = useState('');
   const [templateList, setTemplateList] = useState([]);
   // 接口
@@ -16,12 +15,12 @@ export default () => {
   // 接口数据
   const [dataIndex, setDataIndex] = useState('');
   const [pathData, setPathData] = useState('{}');
-  // 添加模板
+  // 添加接口集
   const [isShowAddTemplate, setIsShowAddTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  // 复制模板
+  // 复制接口集
   const [isShowCopyTemplate, setIsShowCopyTemplate] = useState(false);
-  // 编辑模板
+  // 编辑接口集
   const [isShowEditTemplate, setIsShowEditTemplate] = useState(false);
   // 添加接口
   const [isShowAddPath, setIsShowAddPath] = useState(false);
@@ -29,23 +28,23 @@ export default () => {
   const [method, setMethod] = useState('GET');
   // 编辑接口
   const [isShowEditPath, setIsShowEditPath] = useState(false);
-  // 当前选用模板
-  const [currentTemplate, setCurrentTemplate] = useState({});
+  // // 当前选用接口集
+  // const [currentTemplate, setCurrentTemplate] = useState({});
   // loading状态
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
   const [isPathLoading, setIsPathLoading] = useState(false);
-  // 重载提示
-  const [isNeedToReload, setIsNeedToReload] = useState(false);
+  // // 重载提示
+  // const [isNeedToReload, setIsNeedToReload] = useState(false);
   // 变量
   let pathObj = pathDict[path] || {};
 
-  const fetchCurrentTemplate = () => {
-    Fetch.getCurrent().then(res => {
-      if (res && res.success) {
-        setCurrentTemplate(res.data || {});
-      }
-    })
-  }
+  // const fetchCurrentTemplate = () => {
+  //   Fetch.getCurrent().then(res => {
+  //     if (res && res.success) {
+  //       setCurrentTemplate(res.data || {});
+  //     }
+  //   })
+  // }
   function fetchPathDict(id, cb) {
     setIsPathLoading(true);
     Fetch.getPathDict({ id })
@@ -108,12 +107,11 @@ export default () => {
     setPathData(e.target.value);
   }
   const handleUpdateClick = () => {
-    let data = pathData.replace(/\s*/g, "");
     let pathObj = pathDict[path];
     let pathDataId = pathObj.ids[dataIndex];
     Fetch.updatePathData({
       pathDataId,
-      pathData: data
+      pathData
     })
       .then(res => {
         if (res && res.success) {
@@ -168,9 +166,9 @@ export default () => {
           fetchPathDict(templateId, () => {
             setPath(pathName);
           });
-          if (currentTemplate.id === templateId) {
-            setIsNeedToReload(true);
-          }
+          // if (currentTemplate.id === templateId) {
+          //   setIsNeedToReload(true);
+          // }
         }
       });
     setPathName('');
@@ -179,28 +177,28 @@ export default () => {
     setPathData('');
     setMethod('GET');
   }
-  const submitCurrent = () => {
-    if (!templateId) {
-      message.warning({
-        content: '请选择模板'
-      });
-      return;
-    }
-    Fetch.setCurrent({
-      templateId
-    })
-      .then(res => {
-        if (res && res.success) {
-          fetchCurrentTemplate();
-          if (currentTemplate.id !== templateId) {
-            setIsNeedToReload(true);
-          }
-          message.success({
-            content: '选择成功'
-          });
-        }
-      });
-  }
+  // const submitCurrent = () => {
+  //   if (!templateId) {
+  //     message.warning({
+  //       content: '请选择接口集'
+  //     });
+  //     return;
+  //   }
+  //   Fetch.setCurrent({
+  //     templateId
+  //   })
+  //     .then(res => {
+  //       if (res && res.success) {
+  //         fetchCurrentTemplate();
+  //         if (currentTemplate.id !== templateId) {
+  //           setIsNeedToReload(true);
+  //         }
+  //         message.success({
+  //           content: '选择成功'
+  //         });
+  //       }
+  //     });
+  // }
   const deleteTemplate = () => {
     const onOk = function () {
       Fetch.deleteTemplate({
@@ -244,9 +242,9 @@ export default () => {
             message.success({
               content: '删除成功'
             });
-            if (currentTemplate.id === templateId) {
-              setIsNeedToReload(true);
-            }
+            // if (currentTemplate.id === templateId) {
+            //   setIsNeedToReload(true);
+            // }
           } else {
             message.warning({
               content: res.msg
@@ -282,7 +280,7 @@ export default () => {
     Fetch.reload().then(res => {
       if (res && res.success) {
         message.success('重载服务成功，请等待10秒再调用接口');
-        setIsNeedToReload(false);
+        // setIsNeedToReload(false);
       }
     })
   }
@@ -350,6 +348,7 @@ export default () => {
 
   const handleEditTemplate = () => {
     setIsShowEditTemplate(true);
+    setTemplateName(templateList.find(d => d.id === templateId).name);
   }
 
   const submitEditTemplate = () => {
@@ -387,29 +386,25 @@ export default () => {
             content: '修改成功'
           });
           fetchPathDict(templateId);
-          if (currentTemplate.id === templateId) {
-            setIsNeedToReload(true);
-          }
+          // if (currentTemplate.id === templateId) {
+          //   setIsNeedToReload(true);
+          // }
         }
       });
     setMethod('GET');
   }
 
   // 副作用
-  useEffect(() => {
-    if (!didMount) {
-      didMount = true;
-      fetchCurrentTemplate();
-    }
-  });
-  console.log('isNeedToReload', isNeedToReload);
+  // useEffect(() => {
+  // });
+  // console.log('isNeedToReload', isNeedToReload);
   return (
     <div className={styles.interfaceManagement}>
       <div className={styles.left}>
-        {/* 模板 */}
+        {/* 接口集 */}
         <Row className={styles.row}>
           <Col span={4} className={styles.label}>
-            选择模板：
+            选择接口集：
         </Col>
           <Col span={8}>
             <Select
@@ -428,14 +423,14 @@ export default () => {
               })}
             </Select>
           </Col>
-          <Tooltip title="新建模板"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddTemplate}></Button></Tooltip>
-          <Tooltip title="复制模板"><Button type="primary" icon="copy" className={styles.rightBtn} onClick={handleCopyTemplate} disabled={!templateId}></Button></Tooltip>
-          <Tooltip title="编辑模板"><Button type="primary" icon="edit" className={styles.rightBtn} onClick={handleEditTemplate} disabled={!templateId}></Button></Tooltip>
-          <Tooltip title="选用模板"><Button type="primary" icon="check" className={styles.rightBtn} onClick={submitCurrent} disabled={!templateId}></Button></Tooltip>
-          <Tooltip title="删除模板"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={deleteTemplate} disabled={!templateId}></Button></Tooltip>
-          <Tooltip title="重载服务"><Button type="primary" icon="reload" className={styles.rightBtn} onClick={handleReload}>
+          <Tooltip title="新建接口集"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddTemplate}></Button></Tooltip>
+          <Tooltip title="复制接口集"><Button type="primary" icon="copy" className={styles.rightBtn} onClick={handleCopyTemplate} disabled={!templateId}></Button></Tooltip>
+          <Tooltip title="编辑接口集"><Button type="primary" icon="edit" className={styles.rightBtn} onClick={handleEditTemplate} disabled={!templateId}></Button></Tooltip>
+          {/* <Tooltip title="选用接口集"><Button type="primary" icon="check" className={styles.rightBtn} onClick={submitCurrent} disabled={!templateId}></Button></Tooltip> */}
+          <Tooltip title="删除接口集"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={deleteTemplate} disabled={!templateId}></Button></Tooltip>
+          {/* <Tooltip title="重载服务"><Button type="primary" icon="reload" className={styles.rightBtn} onClick={handleReload}>
             {isNeedToReload && <span className={styles.dotTip}></span>}
-          </Button></Tooltip>
+          </Button></Tooltip> */}
         </Row>
         {/* 接口 */}
         {
@@ -532,7 +527,7 @@ export default () => {
         }
         {/* <Row className={styles.row}>
           <Col span={6} className={styles.label}>
-            当前模板：
+            当前接口集：
         </Col>
           <Col span={14} className={styles.labelText}>
             {currentTemplate.name}
@@ -558,32 +553,32 @@ export default () => {
       </div>
 
 
-      {/* 新建模板 */}
+      {/* 新建接口集 */}
       <Modal
-        title="新建模板"
+        title="新建接口集"
         visible={isShowAddTemplate}
         onOk={submitAddTemplate}
         onCancel={() => setIsShowAddTemplate(false)}
       >
         <Row className={styles.row}>
           <Col span={6} className={styles.label}>
-            模板名称：
+            接口集名称：
         </Col>
           <Col span={14}>
             <Input value={templateName} onChange={handleTemplateNameChange} />
           </Col>
         </Row>
       </Modal>
-      {/* 复制模板 */}
+      {/* 复制接口集 */}
       <Modal
-        title="复制模板"
+        title="复制接口集"
         visible={isShowCopyTemplate}
         onOk={submitCopyTemplate}
         onCancel={() => setIsShowCopyTemplate(false)}
       >
         <Row className={styles.row}>
           <Col span={6} className={styles.label}>
-            模板名称：
+            接口集名称：
         </Col>
           <Col span={14}>
             <Input value={templateName} onChange={handleTemplateNameChange} />
@@ -591,16 +586,16 @@ export default () => {
         </Row>
       </Modal>
 
-      {/* 编辑模板 */}
+      {/* 编辑接口集 */}
       <Modal
-        title="编辑模板"
+        title="编辑接口集"
         visible={isShowEditTemplate}
         onOk={submitEditTemplate}
         onCancel={() => setIsShowEditTemplate(false)}
       >
         <Row className={styles.row}>
           <Col span={6} className={styles.label}>
-            模板名称：
+            接口集名称：
         </Col>
           <Col span={14}>
             <Input value={templateName} onChange={handleTemplateNameChange} />

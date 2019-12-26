@@ -1,5 +1,5 @@
 import { worm } from 'utils';
-const PREFIX = 'http://localhost:3000';
+import { PREFIX } from 'config';
 function makeRequestCreator(url, method) {
   if (method == 'post') {
     return async function (params) {

@@ -110,10 +110,7 @@ exports.updatePathData = async (ctx, next) => {
 
 exports.setCurrent = async (ctx, next) => {
   let body = ctx.request.body;
-  let templateId = body.templateId;
-  let currentObj = getJSON('currentTemplate') || {};
-  currentObj.current = templateId;
-  let jsonStr = JsonFormat(currentObj);
+  let jsonStr = JsonFormat(body.templateIds);
   fs.writeFile(getFilePath('currentTemplate'), jsonStr, 'utf8', (err) => {
     if (err) throw err;
     console.log('done');
@@ -128,12 +125,12 @@ exports.setCurrent = async (ctx, next) => {
 exports.deleteTemplate = async (ctx, next) => {
   let body = ctx.request.body;
   let templateId = body.templateId;
-  let currentObj = getJSON('currentTemplate') || {};
-  if (templateId === currentObj.current) {
+  let currentTemplate = getJSON('currentTemplate') || [];
+  if (currentTemplate.includes(templateId)) {
     ctx.body = {
       success: false,
       data: null,
-      msg: '该模板正在使用，无法删除'
+      msg: '该接口集正在使用，无法删除'
     };
     return next;
   }
@@ -199,20 +196,10 @@ exports.deletePath = async (ctx, next) => {
 }
 
 exports.getCurrent = async (ctx, next) => {
-  let currentObj = getJSON('currentTemplate') || {};
-  let templateId = currentObj.current;
-  let config = getJSON('config') || [];
-  let obj = config.find(d => d.id === templateId) || {};
-  let templates = getJSON('templates');
-  let pathDict = templates[templateId] || {};
-  let pathList = Object.keys(pathDict);
+  let currentTemplate = getJSON('currentTemplate') || {};
   ctx.body = {
     success: true,
-    data: {
-      id: templateId,
-      name: obj.name,
-      list: pathList
-    }
+    data: currentTemplate
   };
   return next;
 }
