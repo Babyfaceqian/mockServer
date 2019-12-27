@@ -76,7 +76,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'Application',
+      title: 'MockServer',
       template: path.resolve(rootPath, 'index.html')
     }),
     new MiniCssExtractPlugin({

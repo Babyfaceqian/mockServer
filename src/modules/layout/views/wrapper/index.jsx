@@ -30,7 +30,7 @@ export default class Wrapper extends React.Component {
     return (
       <Layout className={styles.layout}>
         <Sider collapsible collapsed={this.state.collapsed} onCollapse={this.onCollapse} collapsedWidth={0} width={120}>
-          <div className={styles.logo}>MockJSON</div>
+          <div className={styles.logo}>MockServer</div>
           <Menu theme="dark" selectedKeys={this.state.selectedKeys} mode="inline" onSelect={this.handleMenuSelect}>
             {menuList.map(d => {
               return (
