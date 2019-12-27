@@ -25,6 +25,7 @@ export default () => {
   // 添加接口
   const [isShowAddPath, setIsShowAddPath] = useState(false);
   const [pathName, setPathName] = useState('');
+  const [pathAddr, setPathAddr] = useState('');
   const [method, setMethod] = useState('GET');
   // 编辑接口
   const [isShowEditPath, setIsShowEditPath] = useState(false);
@@ -158,13 +159,14 @@ export default () => {
     setIsShowAddPath(false);
     Fetch.createPath({
       templateId,
-      path: pathName.trim(),
+      path: pathAddr.trim(),
+      pathName: pathName.trim(),
       method: method
     })
       .then(res => {
         if (res && res.success) {
           fetchPathDict(templateId, () => {
-            setPath(pathName);
+            setPath(pathAddr.trim());
           });
           // if (currentTemplate.id === templateId) {
           //   setIsNeedToReload(true);
@@ -172,6 +174,7 @@ export default () => {
         }
       });
     setPathName('');
+    setPathAddr('');
     setDataIndex('');
     setFn('');
     setPathData('');
@@ -371,6 +374,8 @@ export default () => {
 
   const handleEditPath = () => {
     setIsShowEditPath(true);
+    setPathName(pathDict[path].name);
+    setMethod(pathDict[path].method);
   }
 
   const submitEditPath = () => {
@@ -378,6 +383,7 @@ export default () => {
     Fetch.editPath({
       id: templateId,
       path,
+      pathName: pathName.trim(),
       method
     })
       .then(res => {
@@ -391,7 +397,12 @@ export default () => {
           // }
         }
       });
+    setPathName('');
     setMethod('GET');
+  }
+
+  const handlePathAddrChange = (e) => {
+    setPathAddr(e.target.value);
   }
 
   // 副作用
@@ -451,13 +462,33 @@ export default () => {
                 }
               >
                 {Object.keys(pathDict).map((key, i) => {
-                  return <Select.Option key={i} value={key}>{key}</Select.Option>
+                  return <Select.Option key={i} value={key}>{pathDict[key].name}</Select.Option>
                 })}
               </Select>
             </Col>
             <Tooltip title="新建接口"><Button type="primary" icon="plus" className={styles.rightBtn} onClick={handleAddPath}></Button></Tooltip>
             <Tooltip title="编辑接口"><Button type="primary" icon="edit" className={styles.rightBtn} onClick={handleEditPath} disabled={!path}></Button></Tooltip>
             <Tooltip title="删除接口"><Button type="danger" icon="minus" className={styles.rightBtn} onClick={handleDeletePath} disabled={!path}></Button></Tooltip>
+          </Row>
+        }
+        {
+          path && <Row className={styles.row}>
+            <Col span={4} className={styles.label}>
+              接口地址：
+            </Col>
+            <Col span={8} className={styles.labelText}>
+              {path}
+            </Col>
+          </Row>
+        }
+        {
+          path && <Row className={styles.row}>
+            <Col span={4} className={styles.label}>
+              接口方法：
+            </Col>
+            <Col span={8} className={styles.labelText}>
+              {pathDict[path].method}
+            </Col>
           </Row>
         }
         {/* 函数 */}
@@ -617,6 +648,14 @@ export default () => {
             <Input value={pathName} onChange={handlePathNameChange} />
           </Col>
         </Row>
+        <Row className={styles.row}>
+          <Col span={6} className={styles.label}>
+            接口地址：
+        </Col>
+          <Col span={14}>
+            <Input value={pathAddr} onChange={handlePathAddrChange} />
+          </Col>
+        </Row>
         <Row>
           <Col span={6} className={styles.label}>
             方法：
@@ -636,6 +675,14 @@ export default () => {
         onOk={submitEditPath}
         onCancel={() => setIsShowEditPath(false)}
       >
+        <Row className={styles.row}>
+          <Col span={6} className={styles.label}>
+            接口名称：
+        </Col>
+          <Col span={14}>
+            <Input value={pathName} onChange={handlePathNameChange} />
+          </Col>
+        </Row>
         <Row>
           <Col span={6} className={styles.label}>
             方法：

@@ -41,6 +41,7 @@ exports.createPath = async (ctx, next) => {
   let body = ctx.request.body;
   let templateId = body.templateId;
   let path = body.path;
+  let name = body.pathName;
   let method = body.method.toUpperCase();
   let tempaltes = getJSON('templates') || {};
   let pathId = uuid();
@@ -48,6 +49,7 @@ exports.createPath = async (ctx, next) => {
   tempaltes[templateId][path] = {
     ids: [pathId],
     method,
+    name,
     fnId
   };
   let jsonStr = JsonFormat(tempaltes);
@@ -349,9 +351,11 @@ exports.editTemplate = async (ctx, next) => {
 exports.editPath = async (ctx, next) => {
   let method = ctx.request.body.method;
   let path = ctx.request.body.path;
+  let name = ctx.request.body.pathName;
   let id = ctx.request.body.id;
   let templates = getJSON('templates') || [];
   templates[id][path].method = method
+  templates[id][path].name = name
   let templatesStr = JsonFormat(templates);
   fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
     if (err) throw err;
