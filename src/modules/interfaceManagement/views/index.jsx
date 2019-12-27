@@ -125,12 +125,12 @@ export default () => {
     setIsShowAddTemplate(true);
   }
   const handleTemplateNameChange = (e) => {
-    setTemplateName(e.target.value.trim());
+    setTemplateName(e.target.value);
   }
   const submitAddTemplate = () => {
     setIsShowAddTemplate(false);
     Fetch.createTemplate({
-      name: templateName
+      name: templateName.trim()
     })
       .then(res => {
         if (res && res.success) {
@@ -149,7 +149,7 @@ export default () => {
     setIsShowAddPath(true);
   }
   const handlePathNameChange = (e) => {
-    setPathName(e.target.value.trim())
+    setPathName(e.target.value)
   }
   const handleMethodChange = (value) => {
     setMethod(value);
@@ -158,7 +158,7 @@ export default () => {
     setIsShowAddPath(false);
     Fetch.createPath({
       templateId,
-      path: pathName,
+      path: pathName.trim(),
       method: method
     })
       .then(res => {
@@ -262,14 +262,14 @@ export default () => {
   }
 
   const handleFnChange = (e) => {
-    setFn(e.target.value.trim());
+    setFn(e.target.value);
   }
 
   const updatePathFn = () => {
     let pathObj = pathDict[path];
     console.log('pathObj', pathObj)
     let fnId = pathObj.fnId;
-    Fetch.updatePathFn({ fnId, fn }).then(res => {
+    Fetch.updatePathFn({ fnId, fn: fn.trim() }).then(res => {
       if (res && res.success) {
         message.success('更新成功')
       }

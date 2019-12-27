@@ -11,5 +11,4 @@ export const menuList = [
     to: '/publish',
     comp: InterfacePublish
   }
-]
-export const PREFIX = 'http://localhost:3000'
+];

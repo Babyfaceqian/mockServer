@@ -36,7 +36,7 @@ export default class Wrapper extends React.Component {
               return (
                 <Menu.Item key={d.to}>
                   {/* <Icon type="pie-chart" /> */}
-                  <Link to={d.to}>接口管理</Link>
+                  <Link to={d.to}>{d.name}</Link>
                 </Menu.Item>
               )
             })}
