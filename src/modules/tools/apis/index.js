@@ -11,7 +11,4 @@ function makeRequestCreator(url, method) {
     }
   }
 }
-export const getConfig = makeRequestCreator(PREFIX + '/mock/getConfig', 'get');
-export const reload = makeRequestCreator(PREFIX + '/mock/reload', 'get');
-export const getCurrent = makeRequestCreator(PREFIX + '/mock/getCurrent', 'get');
-export const setCurrent = makeRequestCreator(PREFIX + '/mock/setCurrent', 'post');
+export const clearZombieData = makeRequestCreator(PREFIX + '/mock/clearZombieData', 'get');

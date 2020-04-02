@@ -1,1 +1,12 @@
-{}
+{
+	"2933af03-65df-4ac5-b72a-2ee3a00474fe": {
+		"/test": {
+			"ids": [
+				"9b6f19f2-a589-43a8-86ac-3da4a9d9925b"
+			],
+			"method": "GET",
+			"name": "接口",
+			"fnId": "3d3972e2-d20c-4511-bac2-8d644aeeccf6"
+		}
+	}
+}

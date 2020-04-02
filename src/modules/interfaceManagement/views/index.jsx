@@ -3,6 +3,14 @@ import styles from './index.less';
 import * as Fetch from '../apis';
 import { Select, Row, Col, Input, Button, Modal, message, Tooltip } from 'antd';
 import JsonFormat from 'json-format';
+import { Controlled as CodeMirror } from 'react-codemirror2';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/idea.css';
+import 'codemirror/mode/javascript/javascript';
+import 'utils/jsonlint';
+import 'codemirror/addon/lint/json-lint';
+import 'codemirror/addon/lint/lint';
+import 'codemirror/addon/lint/lint.css';
 export default () => {
   // 接口集
   const [templateId, setTemplateId] = useState('');
@@ -104,8 +112,8 @@ export default () => {
     setDataIndex('');
     fetchGetPathData(id);
   }
-  const handlePathDataChange = (e) => {
-    setPathData(e.target.value);
+  const handlePathDataChange = (editor, data, value) => {
+    setPathData(value);
   }
   const handleUpdateClick = () => {
     let pathObj = pathDict[path];
@@ -264,8 +272,8 @@ export default () => {
     });
   }
 
-  const handleFnChange = (e) => {
-    setFn(e.target.value);
+  const handleFnChange = (editor, data, value) => {
+    setFn(value);
   }
 
   const updatePathFn = () => {
@@ -275,15 +283,6 @@ export default () => {
     Fetch.updatePathFn({ fnId, fn: fn.trim() }).then(res => {
       if (res && res.success) {
         message.success('更新成功')
-      }
-    })
-  }
-
-  const handleReload = () => {
-    Fetch.reload().then(res => {
-      if (res && res.success) {
-        message.success('重载服务成功，请等待10秒再调用接口');
-        // setIsNeedToReload(false);
       }
     })
   }
@@ -498,7 +497,19 @@ export default () => {
               函数：
         </Col>
             <Col span={12}>
-              <Input.TextArea value={fn} rows={10} onChange={handleFnChange} />
+              <CodeMirror
+                value={fn}
+                onBeforeChange={handleFnChange}
+                options={{
+                  mode: 'javascript',
+                  them: 'idea',
+                  lineWrapping: true,
+                  lineWiseCopyCut: true,
+                  smartIndent: true,
+                  indentWithTabs: true,
+                  indentUnit: 4
+                }}
+              />
             </Col>
             <Tooltip title="更新函数"><Button type="primary" icon="sync" className={styles.rightBtn} onClick={updatePathFn}></Button></Tooltip>
           </Row>
@@ -545,7 +556,22 @@ export default () => {
         {
           dataIndex && <Row className={styles.row}>
             <Col span={24}>
-              <Input.TextArea value={pathData} onChange={handlePathDataChange} rows="20" />
+              <CodeMirror
+                className={styles.pathDataEditor}
+                value={pathData}
+                onBeforeChange={handlePathDataChange}
+                options={{
+                  lineNumbers: true,
+                  mode: 'application/json',
+                  theme: 'idea',
+                  lineWrapping: true,
+                  lineWiseCopyCut: true,
+                  smartIndent: true,
+                  indentWithTabs: true,
+                  indentUnit: 4,
+                  lint: true
+                }}
+              />
             </Col>
           </Row>
         }
@@ -556,31 +582,6 @@ export default () => {
             </Col>
           </Row>
         }
-        {/* <Row className={styles.row}>
-          <Col span={6} className={styles.label}>
-            当前接口集：
-        </Col>
-          <Col span={14} className={styles.labelText}>
-            {currentTemplate.name}
-          </Col>
-          <Button type="primary" className={styles.rightBtn} onClick={handleReload}>重载服务</Button>
-        </Row>
-        <Row className={styles.row}>
-          <Col span={6} className={styles.label}>
-            当前接口：
-        </Col>
-          <Col span={14}>
-            <ul className={styles.list}>
-              {(currentTemplate.list || []).map(d => {
-                return (
-                  <li>
-                    {d}
-                  </li>
-                )
-              })}
-            </ul>
-          </Col>
-        </Row> */}
       </div>
 
 

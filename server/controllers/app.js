@@ -138,19 +138,45 @@ exports.deleteTemplate = async (ctx, next) => {
   }
   let config = getJSON('config') || [];
   let templates = getJSON('templates') || {};
-  config = config.filter(d => d.id !== templateId);
-  let newTemplates = {};
-  Object.keys(templates).forEach(key => {
-    if (key === templateId) return;
-    newTemplates[key] = templates[key];
+  let indexes = getJSON('indexes') || {};
+  let fns = getJSON('fns') || {};
+
+  // 删除模板下接口数据和函数
+  let deleteIds = [];
+  let deleteFnIds = [];
+  let temp = templates[templateId];
+  Object.keys(temp).forEach(path => {
+    let pathObj = temp[path];
+    deleteIds = deleteIds.concat(pathObj.ids);
+    if (pathObj.fnId) deleteFnIds.push(pathObj.fnId);
   })
+  deleteIds.forEach(key => {
+    delete indexes[key];
+  })
+  deleteFnIds.forEach(key => {
+    delete fns[key];
+  })
+  // 删除模板
+  delete templates[templateId];
+  // 删除模板列表项
+  config = config.filter(d => d.id !== templateId);
   let configStr = JsonFormat(config);
   fs.writeFile(getFilePath('config'), configStr, 'utf8', (err) => {
     if (err) throw err;
     console.log('done');
   });
-  let templatesStr = JsonFormat(newTemplates);
+  let templatesStr = JsonFormat(templates);
   fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let indexesStr = JsonFormat(indexes);
+  fs.writeFile(getFilePath('indexes'), indexesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  });
+  let fnsStr = JsonFormat(fns);
+  fs.writeFile(getFilePath('fns'), fnsStr, 'utf8', (err) => {
     if (err) throw err;
     console.log('done');
   });
@@ -361,6 +387,53 @@ exports.editPath = async (ctx, next) => {
     if (err) throw err;
     console.log('done');
   });
+  ctx.body = {
+    success: true
+  }
+  return next;
+}
+
+exports.clearZombieData = async (ctx, next) => {
+  let config = getJSON('config') || [];
+  let templates = getJSON('templates') || {};
+  let indexes = getJSON('indexes') || {};
+  let fns = getJSON('fns') || {};
+  let pathDataIds = [];
+  let fnIds = [];
+  let templateIds = config.map(d => d.id);
+  Object.keys(templates).forEach(key => {
+    if (!templateIds.includes(key)) {
+      delete templates[key];
+      return;
+    } 
+    Object.keys(templates[key]).forEach(path => {
+      pathDataIds = pathDataIds.concat(templates[key][path].ids);
+      if (templates[key][path].fnId) {
+        fnIds.push(templates[key][path].fnId);
+      }
+    })
+  })
+  Object.keys(indexes).forEach(key => {
+    if (!pathDataIds.includes(key)) delete indexes[key];
+  })
+  Object.keys(fns).forEach(key => {
+    if (!fnIds.includes(key)) delete fns[key];
+  })
+  let templatesStr = JsonFormat(templates);
+  fs.writeFile(getFilePath('templates'), templatesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  })
+  let indexesStr = JsonFormat(indexes);
+  fs.writeFile(getFilePath('indexes'), indexesStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  })
+  let fnsStr = JsonFormat(fns);
+  fs.writeFile(getFilePath('fns'), fnsStr, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('done');
+  })
   ctx.body = {
     success: true
   }

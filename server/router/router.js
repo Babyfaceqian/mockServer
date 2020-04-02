@@ -16,23 +16,24 @@ module.exports = function () {
   })
   router.get('/reload', Reload.reload);
 
-  router.get('/getConfig', App.getConfig);
-  router.post('/createTemplate', App.createTemplate);
-  router.post('/createPath', App.createPath);
-  router.get('/getPathDict', App.getPathDict);
-  router.get('/getPathData', App.getPathData);
-  router.post('/updatePathData', App.updatePathData);
-  router.post('/setCurrent', App.setCurrent);
-  router.post('/deleteTemplate', App.deleteTemplate);
-  router.post('/deletePath', App.deletePath);
-  router.get('/getCurrent', App.getCurrent);
-  router.post('/updatePathFn', App.updatePathFn);
-  router.post('/createPathData', App.createPathData);
-  router.get('/getFn', App.getFn);
-  router.post('/deletePathData', App.deletePathData);
-  router.post('/copyTemplate', App.copyTemplate);
-  router.post('/editTemplate', App.editTemplate);
-  router.post('/editPath', App.editPath);
+  router.get('/mock/getConfig', App.getConfig);
+  router.post('/mock/createTemplate', App.createTemplate);
+  router.post('/mock/createPath', App.createPath);
+  router.get('/mock/getPathDict', App.getPathDict);
+  router.get('/mock/getPathData', App.getPathData);
+  router.post('/mock/updatePathData', App.updatePathData);
+  router.post('/mock/setCurrent', App.setCurrent);
+  router.post('/mock/deleteTemplate', App.deleteTemplate);
+  router.post('/mock/deletePath', App.deletePath);
+  router.get('/mock/getCurrent', App.getCurrent);
+  router.post('/mock/updatePathFn', App.updatePathFn);
+  router.post('/mock/createPathData', App.createPathData);
+  router.get('/mock/getFn', App.getFn);
+  router.post('/mock/deletePathData', App.deletePathData);
+  router.post('/mock/copyTemplate', App.copyTemplate);
+  router.post('/mock/editTemplate', App.editTemplate);
+  router.post('/mock/editPath', App.editPath);
+  router.get('/mock/clearZombieData', App.clearZombieData);
 
   let pathObj = {};
   currentIds.forEach(id => {
